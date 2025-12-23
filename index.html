@@ -205,6 +205,9 @@
         const DB_PATH = "stamp-booth-v1";
         const STAFF_PASSWORD = "christmassci";
         const EXCHANGE_PASSWORD = "CRM25";
+        
+        // --- อัปเดต URL ของ Google Apps Script เรียบร้อยแล้ว ---
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwDG5NG9gwJHcnkYVJidMWUFo71gcT1Ddp8LMSgh7CIbYtbGNE4I9dNwk03g-J5X2zQUQ/exec"; 
 
         const TOTAL_STAMPS = 3;
         const OTP_SECONDS = 180;
@@ -255,23 +258,21 @@
         const renderLogin = () => {
             exitBtn.classList.add('hidden');
             showView(`
-                <div class="bg-white/80 rounded-[2.5rem] p-8 shadow-2xl border border-white/50 animate-in fade-in zoom-in-95 glass-card">
-                    <h2 class="text-3xl font-bold mb-2 text-slate-800 text-center text-balance">ยินดีต้อนรับ</h2>
-                    <p class="text-slate-500 text-sm mb-8 text-center font-medium">เข้าสู่กิจกรรมคริสต์มาสวิทยาศาสตร์</p>
+                <div class="bg-white/80 rounded-[2.5rem] p-8 shadow-2xl border border-white/50 animate-in fade-in zoom-in-95 glass-card text-center text-balance">
+                    <h2 class="text-3xl font-bold mb-2 text-slate-800">ยินดีต้อนรับ</h2>
+                    <p class="text-slate-500 text-sm mb-8 font-medium">เข้าสู่กิจกรรมคริสต์มาสวิทยาศาสตร์</p>
                     <div class="space-y-5">
                         <input type="text" id="studentIdInput" maxlength="10" placeholder="รหัสนักศึกษา" 
                             class="w-full bg-white border-2 border-slate-100 px-5 py-4 rounded-2xl text-xl font-mono tracking-[0.2em] text-center focus:border-[#d42426] outline-none transition-all shadow-sm">
-                        <div id="loginError" class="hidden p-3 bg-red-50 text-red-600 text-[11px] rounded-xl flex items-center justify-center gap-2 font-bold text-center">
+                        <div id="loginError" class="hidden p-3 bg-red-50 text-red-600 text-[11px] rounded-xl flex items-center justify-center gap-2 font-bold">
                             <i data-lucide="alert-circle" size="14"></i> <span id="errorText"></span>
                         </div>
                         <button id="loginSubmit" class="w-full bg-[#d42426] text-white py-4 rounded-2xl font-bold text-lg shadow-lg shadow-red-200 active:scale-95 transition-all">
                             เริ่มสะสมตราปั๊ม
                         </button>
                     </div>
-                    <div class="mt-10 text-center">
-                        <button id="staffAuthBtn" class="text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-[#165b33] transition-colors">
-                            Staff Only
-                        </button>
+                    <div class="mt-10">
+                        <button id="staffAuthBtn" class="text-slate-400 text-[10px] font-bold uppercase tracking-widest hover:text-[#165b33]">Staff Only</button>
                     </div>
                 </div>
             `);
@@ -333,6 +334,9 @@
                     </div>
                 </div>
             `);
+            
+            const otpInp = document.getElementById('staffOtpInput');
+            if (otpInp) { otpInp.addEventListener('input', function() { this.value = this.value.toUpperCase(); }); }
             document.getElementById('staffVerify').onclick = handleStaffVerify;
             document.getElementById('saveDeadline').onclick = handleSaveDeadline;
         };
@@ -348,13 +352,13 @@
             const stampCount = stampList.length;
             
             showView(`
-                <div class="space-y-5 animate-in slide-in-from-bottom-4">
+                <div class="space-y-5 animate-in slide-in-from-bottom-4 pb-10">
                     <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-white flex items-center justify-between glass-card">
                         <div>
-                            <p class="text-[10px] uppercase font-bold text-[#165b33] tracking-widest mb-0.5">นักศึกษา</p>
+                            <p class="text-[10px] uppercase font-bold text-[#165b33] mb-0.5">นักศึกษา</p>
                             <h3 class="text-xl font-mono font-bold text-[#d42426]">${currentStudent.studentNumber}</h3>
                         </div>
-                        <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-[#d42426] shadow-inner">
+                        <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-[#d42426]">
                             <i data-lucide="user" class="w-6 h-6"></i>
                         </div>
                     </div>
@@ -362,22 +366,14 @@
                     <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-white glass-card">
                         <div class="flex justify-between items-center mb-6">
                             <span class="font-bold text-slate-700 text-sm">รายการตราปั๊ม</span>
-                            <span class="text-sm font-bold text-white px-3 py-1 bg-[#165b33] rounded-full shadow-sm">${stampCount} / ${TOTAL_STAMPS}</span>
+                            <span class="text-sm font-bold text-white px-3 py-1 bg-[#165b33] rounded-full">${stampCount} / ${TOTAL_STAMPS}</span>
                         </div>
                         <div class="flex justify-between gap-3">
                             ${[1, 2, 3].map(i => {
                                 const hasStamp = stampList.includes(i);
-                                let innerContent = "";
-                                if (hasStamp) {
-                                    innerContent = '<i data-lucide="check-circle-2" class="text-[#165b33] stamp-active" size="36"></i>';
-                                } else if (i === 3) {
-                                    innerContent = `<div class="tape-effect">รับตราปั้มนี้ได้จาก<br>บูธบอกความในใจแซนต้า</div>`;
-                                } else {
-                                    innerContent = `<span class="text-[8px] font-bold text-slate-300 text-center uppercase tracking-tighter">${BOOTH_NAMES[i]}</span>`;
-                                }
-                                return `<div class="h-28 flex-1 rounded-2xl border-2 flex items-center justify-center transition-all duration-500 ${hasStamp ? 'bg-green-50 border-[#165b33]' : 'bg-slate-50 border-dashed border-slate-200'} shadow-inner">
-                                    ${innerContent}
-                                </div>`;
+                                let innerContent = hasStamp ? '<i data-lucide="check-circle-2" class="text-[#165b33] stamp-active" size="36"></i>' : 
+                                    (i === 3 ? '<div class="tape-effect">รับตราปั้มนี้ได้จาก<br>บูธบอกความในใจแซนต้า</div>' : `<span class="text-[8px] font-bold text-slate-300 text-center uppercase">${BOOTH_NAMES[i]}</span>`);
+                                return `<div class="h-28 flex-1 rounded-2xl border-2 flex items-center justify-center transition-all ${hasStamp ? 'bg-green-50 border-[#165b33]' : 'bg-slate-50 border-dashed border-slate-200'} shadow-inner">${innerContent}</div>`;
                             }).join('')}
                         </div>
                     </div>
@@ -385,24 +381,20 @@
                     <div id="action-area">
                         ${stampCount < TOTAL_STAMPS ? `
                             <div class="bg-slate-900 rounded-[2.5rem] p-8 text-white text-center shadow-2xl relative overflow-hidden">
-                                <div class="absolute -top-4 -right-4 opacity-10 rotate-12"><i data-lucide="atom" size="80"></i></div>
                                 ${currentStudent.otp ? `
                                     <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">แสดงรหัสแก่เจ้าหน้าที่</p>
                                     <h4 class="text-[11px] font-bold text-[#0ea5e9] mb-4 uppercase">${BOOTH_NAMES[currentStudent.targetBooth]}</h4>
                                     <div class="text-7xl font-mono font-black tracking-widest mb-6 text-white">${currentStudent.otp}</div>
-                                    <div class="inline-flex items-center gap-2 bg-white/10 px-5 py-2.5 rounded-full text-sm font-bold border border-white/10">
-                                        <i data-lucide="clock" size="14" class="text-[#0ea5e9]"></i>
-                                        <span id="otp-timer">0:00</span>
+                                    <div class="inline-flex items-center gap-2 bg-white/10 px-5 py-2.5 rounded-full text-sm font-bold">
+                                        <i data-lucide="clock" size="14" class="text-[#0ea5e9]"></i> <span id="otp-timer">0:00</span>
                                     </div>
                                     <button id="cancelOtp" class="block w-full mt-8 text-xs text-slate-500 hover:text-white underline font-bold">ยกเลิกและรีเซ็ต</button>
                                 ` : `
                                     <div id="scanner-view" class="hidden"><div id="reader" class="mb-4"></div><button id="closeScanner" class="text-xs text-slate-400 font-bold uppercase underline">ปิดกล้อง</button></div>
                                     <div id="ready-view">
-                                        <h4 class="font-bold text-xl mb-2 text-white flex items-center justify-center gap-2">สแกนรับตราปั๊ม <i data-lucide="sparkles" class="text-yellow-400 w-5 h-5"></i></h4>
+                                        <h4 class="font-bold text-xl mb-2 text-white">สแกนรับตราปั๊ม</h4>
                                         <p class="text-slate-400 text-xs mb-8 px-4 leading-relaxed font-medium">สแกน QR Code ที่บูธเพื่อรับรหัสยืนยันตัวตน</p>
-                                        <button id="startScanBtn" class="w-full bg-[#d42426] py-4 rounded-2xl font-bold shadow-xl shadow-red-900/50 active:scale-95 flex items-center justify-center gap-3 transition-all">
-                                            <i data-lucide="camera" size="22"></i> เริ่มต้นสแกน
-                                        </button>
+                                        <button id="startScanBtn" class="w-full bg-[#d42426] py-4 rounded-2xl font-bold shadow-xl active:scale-95 flex items-center justify-center gap-3 transition-all"><i data-lucide="camera" size="22"></i> เริ่มต้นสแกน</button>
                                     </div>
                                 `}
                             </div>
@@ -411,17 +403,12 @@
                                 <div class="h-24 w-24 bg-yellow-50 text-[#f59e0b] rounded-full flex items-center justify-center mx-auto animate-bounce shadow-lg shadow-yellow-100">
                                     <i data-lucide="trophy" size="48"></i>
                                 </div>
-                                <div>
-                                    <h3 class="text-2xl font-black text-[#165b33]">ยินดีด้วย!</h3>
-                                    <p class="text-slate-500 text-sm font-bold">คุณสะสมตราปั๊มครบตามเงื่อนไขแล้ว</p>
-                                </div>
+                                <div><h3 class="text-2xl font-black text-[#165b33]">ยินดีด้วย!</h3><p class="text-slate-500 text-sm font-bold">คุณสะสมตราปั๊มครบตามเงื่อนไขแล้ว</p></div>
                                 ${currentStudent.submitted ? `
                                     <div class="p-5 bg-green-50 text-[#165b33] rounded-2xl font-bold border-2 border-[#165b33]">ส่งคำขอสำเร็จแล้ว ✓</div>
                                 ` : `
                                     <button id="finalSubmit" class="w-full bg-[#d42426] text-white py-5 rounded-2xl font-black text-xl flex items-center justify-center gap-2 shadow-xl hover:bg-red-700 active:scale-95 transition-all disabled:bg-slate-400">
-                                        <span id="final-btn-text">
-                                            ${isLate() ? 'แลกชั่วโมงกิจกรรม' : 'ลุ้นโชคจับรางวัล'}
-                                        </span>
+                                        <span id="final-btn-text">${isLate() ? 'แลกชั่วโมงกิจกรรม' : 'ลุ้นโชคจับรางวัล'}</span>
                                         <i data-lucide="chevron-right"></i>
                                     </button>
                                 `}
@@ -432,7 +419,13 @@
             `);
             if (document.getElementById('startScanBtn')) document.getElementById('startScanBtn').onclick = startScanner;
             if (document.getElementById('cancelOtp')) document.getElementById('cancelOtp').onclick = handleCancelOtp;
-            if (document.getElementById('finalSubmit')) document.getElementById('finalSubmit').onclick = showExchangeModal;
+            if (document.getElementById('finalSubmit')) {
+                document.getElementById('finalSubmit').onclick = () => {
+                    if (isSubmittingFinal) return;
+                    if (isLate()) showExchangeModal();
+                    else handleFinalSubmit('luckyDraw');
+                };
+            }
             updateTimerDisplay();
         };
 
@@ -448,7 +441,8 @@
             confirmBtn.onclick = async () => {
                 if (input.value.toUpperCase() === EXCHANGE_PASSWORD) {
                     confirmBtn.disabled = true; btnText.innerText = "กำลังประมวลผล...";
-                    await handleFinalSubmit(); exchangeModal.classList.add('hidden');
+                    await handleFinalSubmit('Transcript');
+                    exchangeModal.classList.add('hidden');
                 } else document.getElementById('exchangeError').classList.remove('hidden');
             };
         };
@@ -460,11 +454,10 @@
             confirmModal.classList.remove('hidden');
             let timeLeft = 3;
             const btn = document.getElementById('modal-confirm-btn');
-            const timerText = document.getElementById('modal-timer-text');
-            btn.disabled = true; timerText.innerText = `โปรดรอ ${timeLeft} วิ`;
+            btn.disabled = true;
             const countdown = setInterval(() => {
-                timeLeft -= 1; timerText.innerText = `โปรดรอ ${timeLeft} วิ`;
-                if (timeLeft <= 0) { clearInterval(countdown); btn.disabled = false; timerText.innerText = "ยืนยันรหัสถูกต้อง"; }
+                timeLeft -= 1; document.getElementById('modal-timer-text').innerText = `โปรดรอ ${timeLeft} วิ`;
+                if (timeLeft <= 0) { clearInterval(countdown); btn.disabled = false; document.getElementById('modal-timer-text').innerText = "ยืนยันรหัสถูกต้อง"; }
             }, 1000);
             document.getElementById('modal-cancel-btn').onclick = () => { clearInterval(countdown); confirmModal.classList.add('hidden'); };
             btn.onclick = () => { confirmModal.classList.add('hidden'); handleLogin(input); };
@@ -477,17 +470,12 @@
             try {
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
-                    const data = snap.data();
-                    if (data.deviceId !== deviceId) {
-                        if (!isAutoLogin) { 
-                            document.getElementById('errorText').innerText = "This id has use in other device"; 
-                            document.getElementById('loginError').classList.remove('hidden'); 
-                            lucide.createIcons();
-                        }
+                    if (snap.data().deviceId !== deviceId) {
+                        if (!isAutoLogin) { document.getElementById('errorText').innerText = "รหัสนักศึกษานี้ถูกใช้งานในอุปกรณ์อื่นแล้ว"; document.getElementById('loginError').classList.remove('hidden'); }
                         else { clearStudentCache(); renderLogin(); }
                         isLoggingIn = false; return;
                     }
-                    currentStudent = data;
+                    currentStudent = snap.data();
                 } else {
                     currentStudent = { studentNumber: studentId, deviceId, stamps: [], otp: null, otpExpiry: null, targetBooth: null, submitted: false };
                     await setDoc(docRef, currentStudent);
@@ -497,13 +485,15 @@
         }
 
         const startStudentSync = () => {
-            const docRef = doc(db, 'artifacts', DB_PATH, 'public', 'data', 'participants', currentStudent.studentNumber);
-            unsubscribeStudent = onSnapshot(docRef, (snap) => { if (snap.exists()) { currentStudent = snap.data(); if (!html5QrCode) renderDashboard(); } });
+            unsubscribeStudent = onSnapshot(doc(db, 'artifacts', DB_PATH, 'public', 'data', 'participants', currentStudent.studentNumber), (snap) => { 
+                if (snap.exists()) { currentStudent = snap.data(); if (!html5QrCode) renderDashboard(); } 
+            });
         };
 
         const startSettingsSync = () => {
-            const docRef = doc(db, 'artifacts', DB_PATH, 'public', 'data', 'settings', 'config');
-            unsubscribeSettings = onSnapshot(docRef, (snap) => { if (snap.exists()) { globalDeadline = snap.data(); if (currentStudent && !html5QrCode) renderDashboard(); } });
+            onSnapshot(doc(db, 'artifacts', DB_PATH, 'public', 'data', 'settings', 'config'), (snap) => { 
+                if (snap.exists()) { globalDeadline = snap.data(); if (currentStudent && !html5QrCode) renderDashboard(); } 
+            });
         };
 
         async function handleSaveDeadline() {
@@ -520,7 +510,7 @@
             html5QrCode.start({ facingMode: "environment" }, { fps: 15, qrbox: 250 }, async (text) => {
                 try {
                     const boothId = parseInt(new URL(text).searchParams.get('booth'));
-                    if (boothId > 2) { alert("QR นี้สำหรับบูธภายนอกเท่านั้น"); return; }
+                    if (boothId > 2) { alert("QR นี้สำหรับบูธภายในเท่านั้น"); return; }
                     await html5QrCode.stop(); html5QrCode = null;
                     if (currentStudent.stamps.includes(boothId)) { alert("คุณได้รับตราปั๊มนี้ไปแล้ว!"); renderDashboard(); }
                     else handleRequestOtp(boothId);
@@ -530,9 +520,9 @@
         };
 
         async function handleRequestOtp(boothId) {
-            const code = Array.from({length:4}, () => "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(Math.floor(Math.random()*36))).join('');
-            const expiry = Date.now() + (OTP_SECONDS * 1000);
-            await updateDoc(doc(db, 'artifacts', DB_PATH, 'public', 'data', 'participants', currentStudent.studentNumber), { otp: code, otpExpiry: expiry, targetBooth: boothId });
+            const chars = "123456789ABCDEFGHIJKLMNPQRSTUVWXYZ";
+            const code = Array.from({length:4}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+            await updateDoc(doc(db, 'artifacts', DB_PATH, 'public', 'data', 'participants', currentStudent.studentNumber), { otp: code, otpExpiry: Date.now() + (OTP_SECONDS * 1000), targetBooth: boothId });
             renderDashboard();
         }
 
@@ -540,10 +530,34 @@
             await updateDoc(doc(db, 'artifacts', DB_PATH, 'public', 'data', 'participants', currentStudent.studentNumber), { otp: null, otpExpiry: null, targetBooth: null });
         }
 
-        async function handleFinalSubmit() {
+        async function handleFinalSubmit(type) {
             if (isSubmittingFinal) return; isSubmittingFinal = true;
-            await updateDoc(doc(db, 'artifacts', DB_PATH, 'public', 'data', 'participants', currentStudent.studentNumber), { submitted: true, submittedAt: Date.now() });
-            alert("ยินดีด้วย! ส่งข้อมูลเข้าร่วมเรียบร้อยแล้ว");
+            const btn = document.getElementById('finalSubmit');
+            if (btn) { btn.disabled = true; }
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        studentNumber: currentStudent.studentNumber, 
+                        type: type 
+                    })
+                });
+
+                await updateDoc(doc(db, 'artifacts', DB_PATH, 'public', 'data', 'participants', currentStudent.studentNumber), { 
+                    submitted: true, 
+                    submittedAt: Date.now(),
+                    submitType: type
+                });
+                
+                alert("ยินดีด้วย! ส่งข้อมูลเข้าร่วมกิจกรรมเรียบร้อยแล้ว");
+            } catch (e) { 
+                alert("เกิดข้อผิดพลาด: " + e.message); 
+                isSubmittingFinal = false; renderDashboard(); 
+            }
         }
 
         function updateTimerDisplay() {
@@ -570,23 +584,19 @@
                     <p class="text-[10px] uppercase font-bold text-green-200 mb-1">ยืนยัน: ${BOOTH_NAMES[user.targetBooth]}</p>
                     <h3 class="text-3xl font-mono font-bold mb-4">${user.studentNumber}</h3>
                     <div class="grid grid-cols-1 gap-3">
-                         <button id="staffConfirm" class="py-4 bg-white text-[#165b33] rounded-2xl font-bold shadow-lg">ประทับตรา</button>
-                         <button id="staffResetDevice" class="py-2 text-[10px] text-red-200 font-bold uppercase tracking-widest border border-red-400/30 rounded-xl hover:bg-red-500/20">ล้างข้อมูลอุปกรณ์ (Reset Device)</button>
+                         <button id="staffConfirm" class="py-4 bg-white text-[#165b33] rounded-2xl font-bold shadow-lg active:scale-95">ประทับตรา</button>
+                         <button id="staffResetDevice" class="py-2 text-[10px] text-red-200 font-bold uppercase tracking-widest border border-red-400/30 rounded-xl">ล้างข้อมูลอุปกรณ์ (Reset Device)</button>
                          <button id="staffCancel" class="py-2 text-[10px] text-white/50 font-bold uppercase">ยกเลิก</button>
                     </div>
                 </div>`;
                 card.classList.remove('hidden'); lucide.createIcons();
-                
                 document.getElementById('staffCancel').onclick = () => card.classList.add('hidden');
-                
                 document.getElementById('staffResetDevice').onclick = async () => {
-                    if(confirm("ยืนยันการล้างข้อมูลอุปกรณ์? นักศึกษาจะสามารถผูกเครื่องใหม่ได้ทันที")) {
+                    if(confirm("ยืนยันการล้างข้อมูลอุปกรณ์?")) {
                         await updateDoc(doc(db, 'artifacts', DB_PATH, 'public', 'data', 'participants', user.studentNumber), { deviceId: null });
-                        alert("ล้างข้อมูลอุปกรณ์สำเร็จ");
-                        card.classList.add('hidden');
+                        alert("ล้างข้อมูลสำเร็จ"); card.classList.add('hidden');
                     }
                 };
-
                 document.getElementById('staffConfirm').onclick = async () => {
                     await updateDoc(doc(db, 'artifacts', DB_PATH, 'public', 'data', 'participants', user.studentNumber), { stamps: arrayUnion(user.targetBooth), otp: null, otpExpiry: null, targetBooth: null });
                     card.classList.add('hidden'); document.getElementById('staffOtpInput').value = "";
@@ -607,7 +617,7 @@
         window.onload = async () => { 
             initDecorations();
             try { 
-                await signInAnonymously(auth); startSettingsSync(); 
+                await signInAnonymously(auth); startSettingsSync();
                 const cachedId = getStudentCache();
                 if (cachedId) { handleLogin(cachedId, true); } else renderLogin(); 
             } catch (e) { document.getElementById('status-display').innerHTML = "Connection Error"; } 
